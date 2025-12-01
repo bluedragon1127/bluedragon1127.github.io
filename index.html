@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chemistry & Environment Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);
+            min-height: 100vh;
+        }
+
+        /* Animation for smooth transitions */
+        .fade-in {
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Custom scrollbar for question text if it gets too long on small screens */
+        .question-text {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+        }
+        
+        .option-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .option-btn:hover:not(:disabled) {
+            transform: translateX(5px);
+            background-color: #f1f5f9;
+        }
+
+        .option-btn:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4">
+
+    <!-- Main Card Container -->
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden relative min-h-[500px] flex flex-col">
+        
+        <!-- Header / Progress Bar -->
+        <div class="bg-teal-700 p-4 text-white flex justify-between items-center shadow-md z-10">
+            <h1 class="font-bold text-lg"><i class="fas fa-atom mr-2"></i>ChemQuiz</h1>
+            <div id="timer-badge" class="hidden bg-teal-800 px-3 py-1 rounded-full text-xs font-mono">
+                <span id="question-counter">1</span>/10
+            </div>
+        </div>
+        <div class="h-1 w-full bg-gray-200">
+            <div id="progress-bar" class="h-1 bg-teal-500 transition-all duration-300" style="width: 0%"></div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="p-6 flex-grow flex flex-col relative">
+            
+            <!-- START SCREEN -->
+            <div id="start-screen" class="flex flex-col items-center justify-center h-full text-center fade-in absolute inset-0 p-6 bg-white z-20">
+                <div class="w-20 h-20 bg-teal-100 rounded-full flex items-center justify-center mb-6 text-teal-600">
+                    <i class="fas fa-flask text-4xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Elements & Impact</h2>
+                <p class="text-gray-600 mb-8">Test your knowledge on Sulfur, Phosphorus, and Uranium.</p>
+                <button onclick="startQuiz()" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transform transition hover:-translate-y-1">
+                    Start Quiz
+                </button>
+            </div>
+
+            <!-- QUIZ SCREEN -->
+            <div id="quiz-screen" class="hidden flex flex-col h-full">
+                <div class="mb-6">
+                    <span class="text-teal-600 text-sm font-semibold tracking-wide uppercase">Question</span>
+                    <h2 id="question-text" class="text-xl font-bold text-gray-800 mt-1 leading-snug"></h2>
+                </div>
+
+                <div id="options-container" class="space-y-3 flex-grow">
+                    <!-- Options injected via JS -->
+                </div>
+
+                <div id="feedback-area" class="mt-4 h-12 flex items-center justify-between invisible">
+                    <span id="feedback-text" class="font-bold"></span>
+                    <button id="next-btn" onclick="nextQuestion()" class="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-lg shadow transition-colors flex items-center">
+                        Next <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- RESULT SCREEN -->
+            <div id="result-screen" class="hidden flex flex-col items-center justify-center h-full text-center fade-in absolute inset-0 p-6 bg-white z-20">
+                <div id="score-icon-container" class="mb-4">
+                    <!-- Icon injected via JS -->
+                </div>
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">Quiz Completed!</h2>
+                <div class="text-5xl font-bold text-teal-600 mb-2" id="final-score">0/10</div>
+                <p id="result-message" class="text-gray-600 mb-8 font-medium"></p>
+                
+                <div class="flex space-x-4">
+                    <button onclick="restartQuiz()" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-6 rounded-lg shadow transition">
+                        <i class="fas fa-redo mr-2"></i> Try Again
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Quiz Data
+        const quizData = [
+            {
+                question: "What harmful effect can sulfur dioxide (SO₂) cause when released into the air?",
+                options: ["Global cooling", "Acid rain", "Ozone formation"],
+                correct: 1
+            },
+            {
+                question: "Which of the following is an advantage of sulfur?",
+                options: ["Causes skin irritation", "Helps in vulcanization of rubber", "Has a bad smell"],
+                correct: 1
+            },
+            {
+                question: "What is a disadvantage of sulfur mining?",
+                options: ["Improves soil condition", "Produces medicines", "Damages land and ecosystems"],
+                correct: 2
+            },
+            {
+                question: "Why is phosphorus important in fertilizers?",
+                options: ["Adds color to crops", "Promotes root and seed growth", "Decreases plant growth"],
+                correct: 1
+            },
+            {
+                question: "Which health benefit is associated with phosphorus?",
+                options: ["Heals wounds instantly", "Strengthens bones and teeth", "Makes hair grow faster"],
+                correct: 1
+            },
+            {
+                question: "What danger is linked to white phosphorus?",
+                options: ["It makes water toxic only", "It is highly toxic and flammable", "It reduces air pollution"],
+                correct: 1
+            },
+            {
+                question: "What environmental problem can be caused by excess phosphorus?",
+                options: ["Eutrophication", "Deforestation", "Ozone depletion"],
+                correct: 0
+            },
+            {
+                question: "What is one major disadvantage of uranium as an energy source?",
+                options: ["Too weak to generate power", "Creates radioactive waste", "Increases oxygen levels"],
+                correct: 1
+            },
+            {
+                question: "Why is uranium considered a reliable energy source?",
+                options: ["It is affected by weather conditions", "It can produce electricity continuously", "It only works during daytime"],
+                correct: 1
+            },
+            {
+                question: "What is a major risk when using uranium in nuclear plants?",
+                options: ["Increased photosynthesis", "Fire and explosion hazards", "Nuclear accidents like Chernobyl"],
+                correct: 2
+            }
+        ];
+
+        // State Variables
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let isAnswering = false;
+
+        // DOM Elements
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const nextBtn = document.getElementById('next-btn');
+        const feedbackArea = document.getElementById('feedback-area');
+        const feedbackText = document.getElementById('feedback-text');
+        const progressBar = document.getElementById('progress-bar');
+        const questionCounter = document.getElementById('question-counter');
+        const timerBadge = document.getElementById('timer-badge');
+
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            startScreen.classList.add('hidden');
+            resultScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            quizScreen.classList.add('fade-in');
+            timerBadge.classList.remove('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            isAnswering = true;
+            feedbackArea.classList.add('invisible');
+            const currentQuestion = quizData[currentQuestionIndex];
+            
+            // Update Text
+            questionText.innerText = currentQuestion.question;
+            questionCounter.innerText = currentQuestionIndex + 1;
+            
+            // Update Progress Bar
+            const progressPercentage = ((currentQuestionIndex) / quizData.length) * 100;
+            progressBar.style.width = `${progressPercentage}%`;
+
+            // Clear previous options
+            optionsContainer.innerHTML = '';
+
+            // Generate Options
+            currentQuestion.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.className = "option-btn w-full text-left p-4 rounded-lg border-2 border-gray-100 text-gray-700 hover:border-teal-200 hover:bg-teal-50 font-medium flex items-center justify-between group";
+                button.innerHTML = `
+                    <span><span class="font-bold mr-2 text-gray-400 group-hover:text-teal-500">${String.fromCharCode(65 + index)}.</span> ${option}</span>
+                    <i class="status-icon fas hidden"></i>
+                `;
+                button.onclick = () => checkAnswer(index, button);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function checkAnswer(selectedIndex, selectedButton) {
+            if (!isAnswering) return;
+            isAnswering = false;
+
+            const currentQuestion = quizData[currentQuestionIndex];
+            const buttons = optionsContainer.getElementsByTagName('button');
+            const correctIndex = currentQuestion.correct;
+
+            // Visual feedback Logic
+            if (selectedIndex === correctIndex) {
+                score++;
+                selectedButton.classList.remove('border-gray-100', 'hover:border-teal-200', 'hover:bg-teal-50');
+                selectedButton.classList.add('bg-green-100', 'border-green-500', 'text-green-800');
+                selectedButton.querySelector('.status-icon').className = "status-icon fas fa-check-circle text-green-600";
+                
+                feedbackText.innerHTML = `<span class="text-green-600"><i class="fas fa-thumbs-up mr-1"></i> Correct!</span>`;
+            } else {
+                selectedButton.classList.remove('border-gray-100', 'hover:border-teal-200', 'hover:bg-teal-50');
+                selectedButton.classList.add('bg-red-100', 'border-red-500', 'text-red-800');
+                selectedButton.querySelector('.status-icon').className = "status-icon fas fa-times-circle text-red-600";
+                
+                // Highlight the correct answer
+                const correctButton = buttons[correctIndex];
+                correctButton.classList.remove('border-gray-100');
+                correctButton.classList.add('bg-green-50', 'border-green-400', 'text-green-800');
+                correctButton.querySelector('.status-icon').className = "status-icon fas fa-check text-green-500";
+                
+                feedbackText.innerHTML = `<span class="text-red-500">Correct: ${String.fromCharCode(65 + correctIndex)}</span>`;
+            }
+
+            // Disable all buttons
+            Array.from(buttons).forEach(btn => btn.disabled = true);
+
+            // Show Feedback and Next Button
+            feedbackArea.classList.remove('invisible');
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
+                // Remove fade-in to re-trigger it
+                quizScreen.classList.remove('fade-in');
+                void quizScreen.offsetWidth; // Trigger reflow
+                quizScreen.classList.add('fade-in');
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            quizScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+            timerBadge.classList.add('hidden');
+            progressBar.style.width = '100%';
+
+            const finalScoreElement = document.getElementById('final-score');
+            const resultMessage = document.getElementById('result-message');
+            const iconContainer = document.getElementById('score-icon-container');
+
+            finalScoreElement.innerText = `${score} / ${quizData.length}`;
+
+            let message = "";
+            let iconHtml = "";
+            let colorClass = "";
+
+            if (score === 10) {
+                message = "Perfect Score! You are a Chemistry genius! 🌟";
+                iconHtml = '<i class="fas fa-trophy text-6xl text-yellow-400"></i>';
+                colorClass = "text-yellow-500";
+            } else if (score >= 7) {
+                message = "Great job! You know your environment well. 👍";
+                iconHtml = '<i class="fas fa-star text-6xl text-teal-500"></i>';
+                colorClass = "text-teal-600";
+            } else if (score >= 4) {
+                message = "Good effort! A little more study on uranium helps. 📚";
+                iconHtml = '<i class="fas fa-book-reader text-6xl text-blue-400"></i>';
+                colorClass = "text-blue-500";
+            } else {
+                message = "Keep learning! Don't give up on science. 🧪";
+                iconHtml = '<i class="fas fa-microscope text-6xl text-gray-400"></i>';
+                colorClass = "text-gray-600";
+            }
+
+            resultMessage.innerText = message;
+            iconContainer.innerHTML = iconHtml;
+            finalScoreElement.className = `text-5xl font-bold ${colorClass} mb-2`;
+        }
+        
+        function restartQuiz() {
+            startQuiz();
+        }
+    </script>
+</body>
+</html>
